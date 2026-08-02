@@ -272,21 +272,23 @@ section {
 #gallery { background: var(--pearl); }
 #gallery .section-inner { padding-left: calc(20px + var(--safe-left)); padding-right: calc(20px + var(--safe-right)); }
 
-/* Mobile & Desktop Masonry */
-.masonry { 
-  display: block; columns: 2 140px; column-gap: 12px; 
-  padding: 10px 0 30px;
+/* Responsive Flexbox Masonry */
+.masonry-wrapper { 
+  display: flex; align-items: flex-start; justify-content: center; gap: 12px;
+  width: 100%; padding: 10px 0 30px;
 }
-.masonry figure {
-  margin: 0 0 12px; 
-  break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid;
-  display: inline-block; width: 100%; vertical-align: top;
-  border-radius: 12px; cursor: pointer; position: relative;
+.masonry-col {
+  display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0;
+}
+.masonry-wrapper figure {
+  margin: 0; border-radius: 12px; cursor: pointer; position: relative;
   overflow: hidden; box-shadow: 0 10px 25px -10px rgba(0,0,0,0.2);
-  opacity: 0;
+  opacity: 0; /* GSAP will fade this in */
 }
-.masonry figure img { width: 100%; display: block; transition: transform 0.6s var(--ease-lux); }
-.masonry figure:hover img { transform: scale(1.05); }
+.masonry-wrapper figure img { 
+  width: 100%; height: auto; display: block; transition: transform 0.6s var(--ease-lux); 
+}
+.masonry-wrapper figure:hover img { transform: scale(1.05); }
 
 /* Lightbox */
 .lightbox {
@@ -929,27 +931,77 @@ const galleryImages = [
   'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?w=700&q=80'
 ];
 
-function buildGallery() {
+let masonryNodes = [];
+
+function renderMasonry() {
   const container = document.getElementById('masonry');
-  galleryImages.forEach((src, i) => {
+  if(!container) return;
+  container.innerHTML = '';
+  container.className = 'masonry-wrapper';
+  
+  const w = window.innerWidth;
+  const numCols = w >= 1200 ? 4 : (w >= 768 ? 3 : 2);
+  
+  const cols = [];
+  const colHeights = [];
+  for(let i = 0; i < numCols; i++) {
+    const col = document.createElement('div');
+    col.className = 'masonry-col';
+    container.appendChild(col);
+    cols.push(col);
+    colHeights.push(0);
+  }
+
+  masonryNodes.forEach(node => {
+    let minIdx = 0;
+    let minH = colHeights[0];
+    for(let i = 1; i < numCols; i++) {
+      if(colHeights[i] < minH) {
+        minH = colHeights[i];
+        minIdx = i;
+      }
+    }
+    cols[minIdx].appendChild(node.fig);
+    colHeights[minIdx] += node.ratio;
+  });
+}
+
+function buildGallery() {
+  masonryNodes = galleryImages.map((src, i) => {
     const fig = document.createElement('figure');
-    const img = document.createElement('img');
+    const img = new Image();
     img.src = src; img.loading = 'lazy'; img.decoding = 'async'; img.alt = "To'y lahzasi";
+    
+    let node = { fig, img, ratio: 1.5 }; // Default ratio
     fig.appendChild(img);
     fig.addEventListener('click', () => openLightbox(src));
-    container.appendChild(fig);
     
+    img.onload = () => {
+      node.ratio = img.naturalHeight / img.naturalWidth;
+      clearTimeout(window.masonryLayoutTimer);
+      window.masonryLayoutTimer = setTimeout(renderMasonry, 50);
+    };
+
     new IntersectionObserver((entries, obs) => {
       entries.forEach(e => {
         if(e.isIntersecting) {
-          gsap.to(e.target, {opacity: 1, duration: 1, ease: 'power2.out', delay: (i % 2) * 0.15});
+          gsap.to(e.target, {opacity: 1, duration: 1, ease: 'power2.out', delay: (i % 3) * 0.15});
           obs.unobserve(e.target);
         }
       });
     }, {threshold: 0.1, rootMargin: '0px 0px -50px 0px'}).observe(fig);
+
+    return node;
   });
+  renderMasonry();
 }
 buildGallery();
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderMasonry, 200);
+});
 
 let lbIndex = 0;
 function openLightbox(src) {
