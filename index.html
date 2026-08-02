@@ -278,7 +278,10 @@ section {
   padding: 10px 0 30px;
 }
 .masonry figure {
-  margin: 0 0 12px; break-inside: avoid; border-radius: 12px; cursor: pointer; position: relative;
+  margin: 0 0 12px; 
+  break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid;
+  display: inline-block; width: 100%;
+  border-radius: 12px; cursor: pointer; position: relative;
   overflow: hidden; box-shadow: 0 10px 25px -10px rgba(0,0,0,0.2);
   opacity: 0; transform: translateY(20px); will-change: transform, opacity;
 }
