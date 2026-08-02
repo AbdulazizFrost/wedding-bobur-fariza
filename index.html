@@ -930,6 +930,8 @@ const galleryImages = [
   'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=700&q=80',
   'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?w=700&q=80'
 ];
+// Exact aspect ratios (height / width) to prevent Layout Shift and asynchronous order shuffling
+const galleryRatios = [1.5, 0.667, 1.5, 0.667, 1.5, 0.667, 0.667, 0.667, 0.667];
 
 let masonryNodes = [];
 
@@ -952,6 +954,7 @@ function renderMasonry() {
     colHeights.push(0);
   }
 
+  // Deterministic shortest-column distribution
   masonryNodes.forEach(node => {
     let minIdx = 0;
     let minH = colHeights[0];
@@ -969,19 +972,21 @@ function renderMasonry() {
 function buildGallery() {
   masonryNodes = galleryImages.map((src, i) => {
     const fig = document.createElement('figure');
-    const img = new Image();
-    img.src = src; img.loading = 'lazy'; img.decoding = 'async'; img.alt = "To'y lahzasi";
+    fig.style.aspectRatio = `1 / ${galleryRatios[i]}`;
+    fig.style.width = '100%';
     
-    let node = { fig, img, ratio: 1.5 }; // Default ratio
+    const img = document.createElement('img');
+    img.src = src; 
+    img.loading = 'lazy'; 
+    img.decoding = 'async'; 
+    img.alt = "To'y lahzasi";
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    
     fig.appendChild(img);
     fig.addEventListener('click', () => openLightbox(src));
     
-    img.onload = () => {
-      node.ratio = img.naturalHeight / img.naturalWidth;
-      clearTimeout(window.masonryLayoutTimer);
-      window.masonryLayoutTimer = setTimeout(renderMasonry, 50);
-    };
-
     new IntersectionObserver((entries, obs) => {
       entries.forEach(e => {
         if(e.isIntersecting) {
@@ -991,8 +996,10 @@ function buildGallery() {
       });
     }, {threshold: 0.1, rootMargin: '0px 0px -50px 0px'}).observe(fig);
 
-    return node;
+    return { fig, ratio: galleryRatios[i] };
   });
+  
+  // Render instantly and perfectly balanced
   renderMasonry();
 }
 buildGallery();
