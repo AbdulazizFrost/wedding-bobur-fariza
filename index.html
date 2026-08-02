@@ -66,20 +66,20 @@ section {
 
 .section-inner {
   width: 100%; max-width: 1180px; margin: 0 auto;
-  padding: 80px 0;
+  padding: clamp(48px, 10vh, 80px) 0;
 }
 .eyebrow {
   font-family: var(--font-body); letter-spacing: .25em; text-transform: uppercase;
-  font-size: 0.7rem; color: var(--gold); text-align: center; margin-bottom: 12px; display: block;
+  font-size: clamp(0.6rem, 2vw, 0.7rem); color: var(--gold); text-align: center; margin-bottom: 12px; display: block;
 }
 .section-title {
   font-family: var(--font-display); font-style: italic; font-weight: 400; text-align: center;
-  font-size: 2.4rem; color: var(--ink); margin: 0 0 16px; line-height: 1.1;
+  font-size: clamp(2rem, 8vw, 2.6rem); color: var(--ink); margin: 0 0 16px; line-height: 1.1;
   word-wrap: break-word; hyphens: auto;
 }
 .section-sub {
   text-align: center; max-width: 100%; margin: 0 auto 40px; color: #6b6154;
-  font-weight: 300; font-size: 0.95rem; line-height: 1.6;
+  font-weight: 300; font-size: clamp(0.85rem, 4vw, 0.95rem); line-height: 1.6;
 }
 
 /* ===================== WELCOME SCREEN (MOBILE) ===================== */
@@ -109,7 +109,7 @@ section {
 }
 .hero-names {
   font-family: var(--font-display); font-weight: 400; font-style: italic;
-  font-size: 14vw; line-height: 1.05; letter-spacing: 0;
+  font-size: clamp(3rem, 14vw, 4.5rem); line-height: 1.05; letter-spacing: 0;
   background: linear-gradient(120deg, #fff 10%, var(--gold-bright) 45%, #fff 65%, var(--champagne) 90%);
   background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
   margin: 0; word-break: break-word; hyphens: auto; padding: 0 10px;
@@ -117,7 +117,7 @@ section {
 .hero-amp { display: block; font-size: 0.6em; margin: 4px 0; color: var(--rose-gold); font-style: italic; }
 .hero-date {
   margin-top: 20px; font-family: var(--font-body); letter-spacing: .2em; text-transform: uppercase;
-  font-size: 0.75rem; color: var(--pearl); padding: 0 10px; line-height: 1.5;
+  font-size: clamp(0.65rem, 3vw, 0.75rem); color: var(--pearl); padding: 0 10px; line-height: 1.5;
 }
 .hero-date span { color: var(--gold-bright); }
 
@@ -126,10 +126,10 @@ section {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   background: rgba(255,255,255,.06); border: 1px solid rgba(228,198,140,.4); backdrop-filter: blur(14px);
   color: var(--pearl); font-family: var(--font-body); letter-spacing: .15em; text-transform: uppercase;
-  font-size: 0.75rem; padding: 0 20px; border-radius: 999px; cursor: pointer;
+  font-size: clamp(0.7rem, 3vw, 0.75rem); padding: 0 20px; border-radius: 999px; cursor: pointer;
   position: relative; overflow: hidden; -webkit-appearance: none; appearance: none;
   touch-action: manipulation;
-  width: 100%; max-width: 280px; min-height: 56px; /* Touch target size */
+  width: 100%; max-width: 280px; min-height: 56px;
   transition: transform 0.2s, background 0.3s;
 }
 .envelope-cta:active { transform: scale(0.96); background: rgba(255,255,255,.1); }
@@ -149,7 +149,9 @@ section {
 }
 #reveal-overlay.active { visibility: visible; }
 .cinematic-envelope {
-  position: relative; width: 280px; height: 180px;
+  position: relative; 
+  width: clamp(240px, 85vw, 280px); 
+  height: clamp(150px, 55vw, 180px);
   background: 
     url('https://www.transparenttextures.com/patterns/cream-paper.png'), 
     linear-gradient(to bottom, #F3EAE0, #E8D2AE);
