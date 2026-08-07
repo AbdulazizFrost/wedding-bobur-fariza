@@ -77,8 +77,6 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO telegram_users (chat_id, username) VALUES (?, ?)", (1168487645, 'admin'))
     c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title) VALUES (?, ?, ?)",
               ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
-    c.execute("INSERT OR IGNORE INTO site_subscribers (site_id, chat_id) VALUES (?, ?)",
-              ('bobur-fariza', 1168487645))
               
     conn.commit()
     conn.close()
@@ -138,6 +136,7 @@ def cmd_help(message: Message):
         "/start — Перезапуск бота\n"
         "/connect &lt;id&gt; &lt;key&gt; — Подключиться к сайту\n"
         "/disconnect &lt;id&gt; — Отключиться от сайта\n"
+        "/stop — Отключить все уведомления\n"
         "/stats — Статистика по вашим сайтам\n\n"
     )
     if is_admin(message.chat.id):
@@ -184,6 +183,12 @@ def cmd_disconnect(message: Message):
     execute_query("DELETE FROM site_subscribers WHERE chat_id = ? AND site_id = ?", 
                   (message.chat.id, site_id), commit=True)
     bot.reply_to(message, f"🔌 Вы отключены от уведомлений для сайта: {site_id}.")
+
+@bot.message_handler(commands=['stop'])
+def cmd_stop(message: Message):
+    execute_query("DELETE FROM site_subscribers WHERE chat_id = ?", 
+                  (message.chat.id,), commit=True)
+    bot.reply_to(message, "🔇 Все уведомления отключены.\nВы больше не будете получать сообщения о новых RSVP.\n\nЕсли захотите возобновить, введите команду:\n<code>/connect &lt;site_id&gt; &lt;site_key&gt;</code>")
 
 @bot.message_handler(commands=['stats'])
 def cmd_stats(message: Message):
