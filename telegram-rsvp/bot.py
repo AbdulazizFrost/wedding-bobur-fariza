@@ -75,8 +75,8 @@ def init_db():
     
     # Автоматическое восстановление сайта bobur-fariza после перезапуска сервера (Render удаляет файлы)
     c.execute("INSERT OR IGNORE INTO telegram_users (chat_id, username) VALUES (?, ?)", (1168487645, 'admin'))
-    c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title, created_by) VALUES (?, ?, ?, ?)",
-              ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза', 1168487645))
+    c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title) VALUES (?, ?, ?)",
+              ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
     c.execute("INSERT OR IGNORE INTO site_subscribers (site_id, chat_id) VALUES (?, ?)",
               ('bobur-fariza', 1168487645))
               
