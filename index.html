@@ -548,7 +548,7 @@ footer .fname { font-family: var(--font-display); font-style: italic; color: var
   <div class="hero-inner">
     <span class="hero-eyebrow reveal">Приглашение на свадьбу</span>
     <h1 class="hero-names reveal">Bobur<span class="hero-amp">&amp;</span>Fariza</h1>
-    <div class="hero-date reveal">13 августа 2026 года <span style="margin:0 6px;">·</span> <span style="white-space: nowrap;">Grand Samarkand</span></div>
+    <div class="hero-date reveal">13 августа 2026 года<br>Grand Samarkand</div>
   </div>
 </section>
 
@@ -824,13 +824,25 @@ function initScrollAnimations() {
   const observer = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if(entry.isIntersecting) {
-        gsap.to(entry.target, {opacity: 1, y: 0, scale: 1, duration: 0.8, ease: 'power3.out'});
+        // Improved elegant animation for reveal elements
+        gsap.fromTo(entry.target, 
+          { opacity: 0, y: 40, scale: 0.98 },
+          { opacity: 1, y: 0, scale: 1, duration: 1.5, ease: 'expo.out', clearProps: "transform" }
+        );
         obs.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
 
-  document.querySelectorAll('.reveal, .detail-card, .map-frame').forEach(el => observer.observe(el));
+  // Stagger hero elements manually
+  const heroElements = document.querySelectorAll('#hero .reveal');
+  gsap.fromTo(heroElements, 
+    { opacity: 0, y: 30 },
+    { opacity: 1, y: 0, duration: 1.5, ease: 'expo.out', stagger: 0.2, delay: 0.5 }
+  );
+  heroElements.forEach(el => el.classList.remove('reveal')); // remove so observer doesn't double-animate
+
+  document.querySelectorAll('.reveal, .detail-card, .map-frame, .gallery-item').forEach(el => observer.observe(el));
 
   
 }
