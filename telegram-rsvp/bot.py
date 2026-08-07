@@ -77,6 +77,8 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO telegram_users (chat_id, username) VALUES (?, ?)", (1168487645, 'admin'))
     c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title) VALUES (?, ?, ?)",
               ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
+    c.execute("INSERT OR IGNORE INTO site_subscribers (site_id, chat_id) VALUES (?, ?)",
+              ('bobur-fariza', 1168487645))
               
     conn.commit()
     conn.close()
