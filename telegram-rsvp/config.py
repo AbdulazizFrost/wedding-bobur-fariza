@@ -16,6 +16,6 @@ ALLOWED_ORIGINS_STR = os.getenv("ALLOWED_ORIGINS", "*")
 if ALLOWED_ORIGINS_STR == "*":
     ALLOWED_ORIGINS = "*"
 else:
-    ALLOWED_ORIGINS = [x.strip() for x in ALLOWED_ORIGINS_STR.split(",") if x.strip()]
+    ALLOWED_ORIGINS = [x.strip().rstrip('/') for x in ALLOWED_ORIGINS_STR.split(",") if x.strip()]
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'rsvp.db')

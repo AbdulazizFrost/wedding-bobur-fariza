@@ -360,7 +360,7 @@ def handle_rsvp():
         
     except Exception as e:
         print(f"Error handling RSVP: {e}")
-        return jsonify({"success": False, "error": "Internal server error"}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 def run_flask():
