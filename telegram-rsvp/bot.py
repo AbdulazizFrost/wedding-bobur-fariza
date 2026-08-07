@@ -368,6 +368,10 @@ def cmd_clearstats(message: Message):
 
 # --- Flask REST API ---
 
+@app.route('/', methods=['GET'])
+def root():
+    return "OK", 200
+
 @app.route('/ping', methods=['GET'])
 def ping():
     return "OK", 200
