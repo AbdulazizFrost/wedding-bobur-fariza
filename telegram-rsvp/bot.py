@@ -100,14 +100,10 @@ def init_db():
         c.execute("INSERT INTO telegram_users (chat_id, username) VALUES (%s, %s) ON CONFLICT DO NOTHING", (1168487645, 'admin'))
         c.execute("INSERT INTO sites (site_id, site_key, title) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                   ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
-        c.execute("INSERT INTO site_subscribers (site_id, chat_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                  ('bobur-fariza', 1168487645))
     else:
         c.execute("INSERT OR IGNORE INTO telegram_users (chat_id, username) VALUES (?, ?)", (1168487645, 'admin'))
         c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title) VALUES (?, ?, ?)",
                   ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
-        c.execute("INSERT OR IGNORE INTO site_subscribers (site_id, chat_id) VALUES (?, ?)",
-                  ('bobur-fariza', 1168487645))
                   
     conn.commit()
     c.close()
