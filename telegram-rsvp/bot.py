@@ -3,6 +3,8 @@ import sqlite3
 import psycopg2
 import psycopg2.extras
 import threading
+import time
+import requests
 import secrets
 import string
 from datetime import datetime
@@ -448,10 +450,25 @@ def run_flask():
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
+def keep_awake():
+    """Pings the server's own public URL every 10 minutes to prevent Render from sleeping."""
+    url = "https://wedding-backend-rsy0.onrender.com/ping"
+    while True:
+        try:
+            time.sleep(600)  # Sleep 10 minutes
+            requests.get(url, timeout=10)
+            print("Self-ping successful. Kept awake.")
+        except Exception as e:
+            print(f"Self-ping failed: {e}")
+
 if __name__ == '__main__':
     print("Starting Flask API in background...")
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
+    
+    print("Starting keep-awake thread...")
+    awake_thread = threading.Thread(target=keep_awake, daemon=True)
+    awake_thread.start()
     
     import time
     while True:
