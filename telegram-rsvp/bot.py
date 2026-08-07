@@ -34,6 +34,7 @@ bot = telebot.TeleBot(config.BOT_TOKEN, parse_mode="HTML")
 
 # Database setup
 def get_db():
+    os.makedirs(os.path.dirname(config.DB_PATH), exist_ok=True)
     conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
