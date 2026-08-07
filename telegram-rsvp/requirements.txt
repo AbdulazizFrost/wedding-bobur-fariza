@@ -1,0 +1,5 @@
+Flask==3.0.3
+pyTelegramBotAPI==4.16.1
+python-dotenv==1.0.1
+Flask-CORS==4.0.1
+Flask-Limiter==3.8.0
