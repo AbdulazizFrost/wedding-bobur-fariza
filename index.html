@@ -548,7 +548,7 @@ footer .fname { font-family: var(--font-display); font-style: italic; color: var
   <div class="hero-inner">
     <span class="hero-eyebrow reveal">Приглашение на свадьбу</span>
     <h1 class="hero-names reveal">Bobur<span class="hero-amp">&amp;</span>Fariza</h1>
-    <div class="hero-date reveal">13 августа 2026 года <span style="margin:0 6px;">·</span> Grand Samarkand</div>
+    <div class="hero-date reveal">13 августа 2026 года <span style="margin:0 6px;">·</span> <span style="white-space: nowrap;">Grand Samarkand</span></div>
   </div>
 </section>
 
@@ -623,14 +623,13 @@ footer .fname { font-family: var(--font-display); font-style: italic; color: var
           <h4>Grand Samarkand</h4>
           <p>г. Самарканд</p>
         </div>
-        <a class="route-btn" id="routeBtn" href="https://www.google.com/maps/dir/?api=1&destination=Grand+Samarkand,+Samarkand,+Uzbekistan" target="_blank" rel="noopener">Маршрут</a>
+        <a class="route-btn" id="routeBtn" href="https://www.google.com/maps/search/?api=1&query=Grand+Samarkand,+Samarkand,+Uzbekistan" target="_blank" rel="noopener">Локация</a>
         <script>
           // Smart map link: Apple Maps for iOS, Google Maps for Android/Others
           const routeBtn = document.getElementById('routeBtn');
           if(routeBtn) {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if(isIOS) {
-              routeBtn.href = "http://maps.apple.com/?daddr=Grand+Samarkand,+Samarkand,+Uzbekistan";
+            if(navigator.userAgent.match(/(iPhone|iPod|iPad)/i)){
+              routeBtn.href = "http://maps.apple.com/?q=Grand+Samarkand,+Samarkand,+Uzbekistan";
             }
           }
         </script>
