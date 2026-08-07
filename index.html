@@ -25,7 +25,15 @@
   --ink: #2A2620;
   --font-display: 'Cormorant Garamond', serif;
   --font-body: 'Jost', sans-serif;
+  
+  /* Motion Tokens */
+  --motion-fast: 0.4s;
+  --motion-medium: 0.8s;
+  --motion-slow: 1.2s;
+  --motion-cinematic: 2.2s;
+  --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-lux: cubic-bezier(.22,1,.36,1);
+  
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
@@ -51,7 +59,8 @@ img { max-width: 100%; height: auto; }
 ::selection { background: var(--gold-bright); color: var(--navy-deep); }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  * { scroll-behavior: auto !important; }
+  .petal { display: none !important; }
 }
 
 /* Hide desktop elements on mobile */
@@ -131,9 +140,12 @@ section {
   position: relative; overflow: hidden; -webkit-appearance: none; appearance: none;
   touch-action: manipulation;
   width: 100%; max-width: 280px; min-height: 56px;
-  transition: transform 0.2s, background 0.3s;
+  transition: transform var(--motion-fast) var(--ease-lux), background var(--motion-fast) var(--ease-lux), opacity var(--motion-medium);
 }
-.envelope-cta:active { transform: scale(0.96); background: rgba(255,255,255,.1); }
+@media (hover: hover) {
+  .envelope-cta:hover { transform: translateY(-1px); background: rgba(255,255,255,.1); }
+}
+.envelope-cta:active { transform: scale(0.98); background: rgba(255,255,255,.12); transition-duration: 0.1s; }
 .envelope-cta .seal {
   width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
   background: radial-gradient(circle at 35% 30%, #a32230, #610d15 50%, #300408 100%);
@@ -261,13 +273,14 @@ section {
 }
 .flip-face .num {
   font-family: var(--font-display); font-size: 1.8rem; color: var(--gold-bright); line-height: 1;
-  text-shadow: 0 0 15px rgba(228,198,140,.3); font-variant-numeric: lining-nums tabular-nums;
+  text-shadow: 0 0 15px rgba(228,198,140,.3); font-variant-numeric: tabular-nums;
+  display: inline-block; transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .flip-face .lbl {
   font-size: 0.55rem; letter-spacing: .05em; text-transform: uppercase; color: var(--champagne); margin-top: 4px;
 }
-.flip-card.pulse .flip-face { animation: flipPulse 0.4s var(--ease-lux); }
-@keyframes flipPulse { 0% { transform: rotateX(0deg); } 50% { transform: rotateX(-90deg); opacity: .4; } 100% { transform: rotateX(0deg); opacity: 1; } }
+.flip-card.pulse .flip-face .num { animation: softFadeUp 0.6s var(--ease-lux); }
+@keyframes softFadeUp { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
 
 /* ===================== GALLERY ===================== */
 #gallery { background: var(--pearl); }
@@ -284,12 +297,19 @@ section {
 .masonry-wrapper figure {
   margin: 0; border-radius: 12px; cursor: pointer; position: relative;
   overflow: hidden; box-shadow: 0 10px 25px -10px rgba(0,0,0,0.2);
-  opacity: 0; /* GSAP will fade this in */
+  /* Initial state for GSAP */
+  opacity: 0; clip-path: inset(15% 0 0 0); transform: translateY(10px);
 }
 .masonry-wrapper figure img { 
-  width: 100%; height: auto; display: block; transition: transform 0.6s var(--ease-lux); 
+  width: 100%; height: auto; display: block; transition: transform var(--motion-slow) var(--ease-cinematic); 
 }
-.masonry-wrapper figure:hover img { transform: scale(1.05); }
+@media (hover: hover) {
+  .masonry-wrapper figure:hover img { transform: scale(1.02); }
+  .masonry-wrapper figure::after {
+    content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.1); opacity: 0; transition: opacity var(--motion-medium); pointer-events: none;
+  }
+  .masonry-wrapper figure:hover::after { opacity: 1; }
+}
 
 /* Lightbox */
 .lightbox {
@@ -405,9 +425,12 @@ section {
   background: linear-gradient(120deg, var(--gold), var(--gold-bright), var(--gold));
   background-size: 200% 100%;
   color: #2b1f0d; font-family: var(--font-body); letter-spacing: .2em; text-transform: uppercase; font-size: 0.8rem; font-weight: 500;
-  touch-action: manipulation; transition: transform 0.2s;
+  touch-action: manipulation; transition: transform var(--motion-fast) var(--ease-lux), background var(--motion-fast) var(--ease-lux);
 }
-.submit-btn:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .submit-btn:hover:not(:disabled) { transform: translateY(-1px); background: #dcb674; }
+}
+.submit-btn:active:not(:disabled) { transform: scale(0.98); background: #cfab6a; transition-duration: 0.1s; }
 .form-msg {
   text-align: center; color: var(--gold-bright); font-family: var(--font-display); font-style: italic;
   font-size: 1.3rem; margin-top: 0; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.5s;
@@ -819,32 +842,58 @@ function openInvitation() {
     .to('#revealFlash', {opacity: 0, duration: 0.6, ease: 'power2.out'});
 }
 
-/* ---------- Scroll reveals (Intersection Observer for performance) ---------- */
+/* ---------- Scroll reveals (GSAP ScrollTrigger) ---------- */
 function initScrollAnimations() {
-  const observer = new IntersectionObserver((entries, obs) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting) {
-        // Improved elegant animation for reveal elements
-        gsap.fromTo(entry.target, 
-          { opacity: 0, y: 40, scale: 0.98 },
-          { opacity: 1, y: 0, scale: 1, duration: 1.5, ease: 'expo.out', clearProps: "transform" }
-        );
-        obs.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  // Stagger hero elements manually
+  // Stagger hero elements cinematically
   const heroElements = document.querySelectorAll('#hero .reveal');
   gsap.fromTo(heroElements, 
-    { opacity: 0, y: 30 },
-    { opacity: 1, y: 0, duration: 1.5, ease: 'expo.out', stagger: 0.2, delay: 0.5 }
+    { opacity: 0, y: 20, filter: 'blur(8px)' },
+    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 2.2, ease: 'expo.out', stagger: 0.2, delay: 0.2, clearProps: "transform,filter" }
   );
-  heroElements.forEach(el => el.classList.remove('reveal')); // remove so observer doesn't double-animate
+  heroElements.forEach(el => el.classList.remove('reveal')); // remove class to prevent double animation
 
-  document.querySelectorAll('.reveal, .detail-card, .map-frame, .gallery-item').forEach(el => observer.observe(el));
+  // Stagger Story Items
+  ScrollTrigger.batch(".story-item", {
+    onEnter: batch => gsap.fromTo(batch, 
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 1.2, ease: "power3.out", stagger: 0.15, overwrite: true, clearProps: "transform" }
+    ),
+    start: "top 85%",
+    once: true
+  });
 
-  
+  // General Reveals
+  gsap.utils.toArray('.reveal, .detail-card, .map-frame').forEach(el => {
+    // Skip rsvp section for custom stagger
+    if (el.id === 'rsvp') return;
+    gsap.fromTo(el,
+      { opacity: 0, y: 30 },
+      {
+        scrollTrigger: { trigger: el, start: "top 85%", once: true },
+        opacity: 1, y: 0, duration: 1.2, ease: "power3.out", clearProps: "transform"
+      }
+    );
+  });
+
+  // RSVP Form Stagger
+  const rsvpSection = document.getElementById('rsvp');
+  if (rsvpSection) {
+    gsap.fromTo(rsvpSection,
+      { opacity: 0, y: 30 },
+      {
+        scrollTrigger: { trigger: rsvpSection, start: "top 85%", once: true },
+        opacity: 1, y: 0, duration: 1.2, ease: "power3.out", clearProps: "transform",
+        onStart: () => {
+          gsap.fromTo(rsvpSection.querySelectorAll('.field, .submit-btn'),
+            { opacity: 0, y: 15 },
+            { opacity: 1, y: 0, duration: 0.8, ease: "power2.out", stagger: 0.1, delay: 0.2, clearProps: "transform" }
+          );
+        }
+      }
+    );
+  }
 }
 
 /* ---------- Countdown logic ---------- */
@@ -934,17 +983,28 @@ function buildGallery() {
     new IntersectionObserver((entries, obs) => {
       entries.forEach(e => {
         if(e.isIntersecting) {
-          gsap.to(e.target, {opacity: 1, duration: 1, ease: 'power2.out', delay: (i % 3) * 0.15});
+          gsap.to(e.target, {
+            opacity: 1, 
+            y: 0, 
+            clipPath: 'inset(0% 0 0 0)', 
+            duration: 1.4, 
+            ease: 'expo.out', 
+            delay: (i % 3) * 0.15,
+            clearProps: "transform,clipPath"
+          });
           obs.unobserve(e.target);
         }
       });
-    }, {threshold: 0.1, rootMargin: '0px 0px -50px 0px'}).observe(fig);
+    }, {threshold: 0.1, rootMargin: '0px 0px -30px 0px'}).observe(fig);
 
     return { fig, ratio: galleryRatios[i] };
   });
   
   // Render instantly and perfectly balanced
   renderMasonry();
+  
+  // Refresh ScrollTrigger after images load to fix mobile layout shifts
+  setTimeout(() => ScrollTrigger.refresh(), 500);
 }
 buildGallery();
 
@@ -1080,10 +1140,17 @@ function toggleMusic() {
 }
 
 /* ---------- Floating petals decor ---------- */
-if(!isWeakDevice) {
+if(!isWeakDevice && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
   const colors = ['#E4C68C','#CBA789','#F3EAE0'];
+  let isHeroVisible = true;
+  
+  // Optimize: only spawn petals when Hero is visible
+  new IntersectionObserver((entries) => {
+    isHeroVisible = entries[0].isIntersecting;
+  }).observe(document.getElementById('hero'));
+
   setInterval(() => {
-    if(document.body.classList.contains('pre-reveal')) return;
+    if(document.body.classList.contains('pre-reveal') || !isHeroVisible) return;
     const p = document.createElement('div');
     p.className = 'petal';
     const size = 6 + Math.random() * 8;
@@ -1099,6 +1166,11 @@ if(!isWeakDevice) {
     });
   }, isMobile ? 3500 : 1500);
 }
+
+// Ensure ScrollTrigger gets accurate positions after everything is fully loaded (images, fonts, etc.)
+window.addEventListener('load', () => {
+  setTimeout(() => ScrollTrigger.refresh(), 200);
+});
 </script>
 </body>
 </html>
