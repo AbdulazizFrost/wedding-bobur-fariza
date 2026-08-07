@@ -18,4 +18,8 @@ if ALLOWED_ORIGINS_STR == "*":
 else:
     ALLOWED_ORIGINS = [x.strip().rstrip('/') for x in ALLOWED_ORIGINS_STR.split(",") if x.strip()]
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'rsvp.db')
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    # Fallback to local SQLite if no cloud database is provided
+    DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'rsvp.db')
+    DATABASE_URL = f"sqlite:///{DB_PATH}"

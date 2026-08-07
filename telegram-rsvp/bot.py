@@ -1,5 +1,7 @@
 import os
 import sqlite3
+import psycopg2
+import psycopg2.extras
 import threading
 import secrets
 import string
@@ -33,54 +35,80 @@ limiter = Limiter(
 bot = telebot.TeleBot(config.BOT_TOKEN, parse_mode="HTML")
 
 # Database setup
+def is_postgres():
+    return config.DATABASE_URL and config.DATABASE_URL.startswith('postgres')
+
 def get_db():
-    os.makedirs(os.path.dirname(config.DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if is_postgres():
+        conn = psycopg2.connect(config.DATABASE_URL)
+        return conn
+    else:
+        os.makedirs(os.path.dirname(config.DB_PATH), exist_ok=True)
+        conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
     conn = get_db()
     c = conn.cursor()
-    c.executescript('''
+    
+    rsvps_pk = "SERIAL PRIMARY KEY" if is_postgres() else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    
+    queries = f'''
         CREATE TABLE IF NOT EXISTS sites (
             site_id TEXT PRIMARY KEY,
             site_key TEXT,
             title TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS telegram_users (
-            chat_id INTEGER PRIMARY KEY,
+            chat_id BIGINT PRIMARY KEY,
             username TEXT
         );
         CREATE TABLE IF NOT EXISTS site_subscribers (
-            chat_id INTEGER,
+            chat_id BIGINT,
             site_id TEXT,
             PRIMARY KEY (chat_id, site_id),
             FOREIGN KEY (chat_id) REFERENCES telegram_users(chat_id),
             FOREIGN KEY (site_id) REFERENCES sites(site_id)
         );
         CREATE TABLE IF NOT EXISTS rsvps (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {rsvps_pk},
             site_id TEXT,
             name TEXT,
             guests INTEGER,
             attendance TEXT,
             phone TEXT,
             comment TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (site_id) REFERENCES sites(site_id)
         );
-    ''')
+    '''
     
-    # Автоматическое восстановление сайта bobur-fariza после перезапуска сервера (Render удаляет файлы)
-    c.execute("INSERT OR IGNORE INTO telegram_users (chat_id, username) VALUES (?, ?)", (1168487645, 'admin'))
-    c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title) VALUES (?, ?, ?)",
-              ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
-    c.execute("INSERT OR IGNORE INTO site_subscribers (site_id, chat_id) VALUES (?, ?)",
-              ('bobur-fariza', 1168487645))
-              
+    if is_postgres():
+        c.execute(queries)
+    else:
+        c.executescript(queries)
+    
+    # We still insert the default admin but we don't auto-subscribe them to sites
+    # to avoid spamming them during production usage.
+    
+    # Postgres syntax for ON CONFLICT DO NOTHING
+    if is_postgres():
+        c.execute("INSERT INTO telegram_users (chat_id, username) VALUES (%s, %s) ON CONFLICT DO NOTHING", (1168487645, 'admin'))
+        c.execute("INSERT INTO sites (site_id, site_key, title) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                  ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
+        c.execute("INSERT INTO site_subscribers (site_id, chat_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                  ('bobur-fariza', 1168487645))
+    else:
+        c.execute("INSERT OR IGNORE INTO telegram_users (chat_id, username) VALUES (?, ?)", (1168487645, 'admin'))
+        c.execute("INSERT OR IGNORE INTO sites (site_id, site_key, title) VALUES (?, ?, ?)",
+                  ('bobur-fariza', 'MuUkm7qK7AS9E9U6', 'Бобур & Фариза'))
+        c.execute("INSERT OR IGNORE INTO site_subscribers (site_id, chat_id) VALUES (?, ?)",
+                  ('bobur-fariza', 1168487645))
+                  
     conn.commit()
+    c.close()
     conn.close()
 
 init_db()
@@ -88,9 +116,23 @@ init_db()
 # --- Helper DB Functions ---
 def execute_query(query, params=(), fetchone=False, fetchall=False, commit=False):
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor) if is_postgres() else conn.cursor()
+    
     try:
-        c.execute(query, params)
+        # Convert SQLite placeholders to Postgres placeholders
+        if is_postgres():
+            query = query.replace('?', '%s')
+            query = query.replace('INSERT OR IGNORE', 'INSERT')
+        
+        try:
+            c.execute(query, params)
+        except Exception as query_exc:
+            # Handle Postgres unique constraint violation to mimic INSERT OR IGNORE
+            if is_postgres() and "UniqueViolation" in str(type(query_exc)):
+                conn.rollback()
+                return None
+            raise query_exc
+            
         res = None
         if fetchone:
             res = c.fetchone()
@@ -98,13 +140,14 @@ def execute_query(query, params=(), fetchone=False, fetchall=False, commit=False
             res = c.fetchall()
         if commit:
             conn.commit()
-            res = c.lastrowid
+            res = c.lastrowid if not is_postgres() else None
         return res
     except Exception as e:
         print(f"DB Error: {e}")
         conn.rollback()
         return None
     finally:
+        c.close()
         conn.close()
 
 def generate_key(length=16):
