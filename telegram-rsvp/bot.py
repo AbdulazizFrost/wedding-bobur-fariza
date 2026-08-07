@@ -325,6 +325,10 @@ def cmd_clearstats(message: Message):
 
 # --- Flask REST API ---
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return "OK", 200
+
 @app.route('/api/v1/rsvp', methods=['POST'])
 @limiter.limit("5 per minute")
 def handle_rsvp():
