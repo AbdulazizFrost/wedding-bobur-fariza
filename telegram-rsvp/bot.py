@@ -449,5 +449,11 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     
-    print("Starting Telegram Bot...")
-    bot.infinity_polling()
+    import time
+    while True:
+        try:
+            print("Starting Telegram Bot...")
+            bot.polling(non_stop=True, interval=0, timeout=20)
+        except Exception as e:
+            print(f"Polling error (usually 409 during deployment): {e}")
+            time.sleep(5)
