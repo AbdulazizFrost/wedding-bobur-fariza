@@ -144,6 +144,7 @@ def cmd_help(message: Message):
             "👑 <b>Админские команды:</b>\n"
             "/newsite &lt;site_id&gt; &lt;Название&gt; — Создать сайт\n"
             "/removesite &lt;site_id&gt; — Удалить сайт\n"
+            "/clearstats &lt;site_id&gt; — Удалить все тестовые заявки\n"
             "/sites — Список всех сайтов\n"
             "/siteinfo &lt;site_id&gt; — Информация о сайте\n"
         )
@@ -303,7 +304,21 @@ def cmd_removesite(message: Message):
     site_id = args[1]
     execute_query("DELETE FROM sites WHERE site_id = ?", (site_id,), commit=True)
     execute_query("DELETE FROM site_subscribers WHERE site_id = ?", (site_id,), commit=True)
-    bot.reply_to(message, f"✅ Сайт {site_id} и все его подписки удалены.")
+    execute_query("DELETE FROM rsvps WHERE site_id = ?", (site_id,), commit=True)
+    bot.reply_to(message, f"✅ Сайт {site_id} и все его данные удалены.")
+
+@bot.message_handler(commands=['clearstats'])
+def cmd_clearstats(message: Message):
+    if not is_admin(message.chat.id):
+        return
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(message, "⚠️ Использование: <code>/clearstats &lt;site_id&gt;</code>")
+        return
+        
+    site_id = args[1]
+    execute_query("DELETE FROM rsvps WHERE site_id = ?", (site_id,), commit=True)
+    bot.reply_to(message, f"🧹 Все тестовые заявки (RSVP) для сайта {site_id} успешно удалены!\nТеперь статистика обнулена.")
 
 
 # --- Flask REST API ---
