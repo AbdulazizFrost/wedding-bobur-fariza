@@ -331,7 +331,7 @@ section {
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.6); backdrop-filter: blur(16px);
   box-shadow: 0 15px 35px -10px rgba(80,60,30,.2);
-  opacity: 0; transform: translateY(20px); will-change: transform, opacity;
+  opacity: 0; transform: translateY(20px);
 }
 .detail-card .icon {
   width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 50%;
@@ -850,10 +850,10 @@ function initScrollAnimations() {
   const observer = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if(entry.isIntersecting) {
-        // Improved elegant animation for reveal elements
+        // Improved elegant animation for reveal elements, avoiding scale for iOS bug fixes
         gsap.fromTo(entry.target, 
-          { opacity: 0, y: 40, scale: 0.98 },
-          { opacity: 1, y: 0, scale: 1, duration: 1.5, ease: 'expo.out', clearProps: "transform" }
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out', clearProps: "transform" }
         );
         obs.unobserve(entry.target);
       }
