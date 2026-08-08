@@ -233,7 +233,7 @@ section {
   background: #ffffff;
   border: 1px solid rgba(228, 198, 140, 0.4); border-radius: 20px;
   box-shadow: 0 15px 35px -10px rgba(80,60,30,.1);
-  opacity: 0; transform: translateY(20px); will-change: transform, opacity;
+  opacity: 0; transform: translateY(20px);
 }
 .story-item .story-year {
   font-family: var(--font-display); font-style: italic; color: var(--gold);
@@ -260,7 +260,7 @@ section {
 .flip-card { width: 100%; height: 80px; position: relative; perspective: 800px; }
 .flip-face {
   position: absolute; inset: 0; border-radius: 8px;
-  background: rgba(255,255,255,.05); backdrop-filter: blur(12px);
+  background: rgba(255,255,255,.1);
   border: 1px solid rgba(228,198,140,.2);
   display: flex; align-items: center; justify-content: center; flex-direction: column;
   box-shadow: 0 10px 20px -5px rgba(0,0,0,.3);
@@ -348,7 +348,7 @@ section {
 .map-frame {
   border-radius: 12px; overflow: hidden; position: relative;
   border: 1px solid rgba(203,167,137,.4); box-shadow: 0 20px 40px -20px rgba(80,60,30,.2);
-  opacity: 0; transform: translateY(20px); will-change: transform, opacity;
+  opacity: 0; transform: translateY(20px);
 }
 .map-visual {
   height: 240px; width: 100%;
@@ -456,7 +456,7 @@ footer .fname { font-family: var(--font-display); font-style: italic; color: var
   position: fixed; top: -40px; z-index: 8; pointer-events: none; opacity: .8;
   will-change: transform;
 }
-.reveal { opacity: 0; transform: translateY(30px); will-change: transform, opacity; }
+.reveal { opacity: 0; transform: translateY(30px); }
 
 /* ===================== DESKTOP STYLES (>= 768px) ===================== */
 @media (min-width: 768px) {
@@ -727,6 +727,7 @@ if(!isMobile){
 /* ---------- Optimized Canvas Logic ---------- */
 function initCanvas(id, drawFn, count, mobileCount, isStaticOnWeak = false) {
   const canvas = document.getElementById(id);
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   let w, h, elements = [];
   const finalCount = isMobile ? mobileCount : count;
@@ -739,7 +740,27 @@ function initCanvas(id, drawFn, count, mobileCount, isStaticOnWeak = false) {
   }
   window.addEventListener('resize', resize, {passive: true});
   resize();
+  
+  // Only animate when visible to save battery and stop lag
+  let isVisible = false;
+  let rafId = null;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      isVisible = entry.isIntersecting;
+    });
+  }, { rootMargin: '100px' });
+  observer.observe(canvas.parentElement || canvas);
+  
+  // Wrap the drawFn requestAnimationFrame with a visibility check
+  const originalRaf = window.requestAnimationFrame;
+  window.requestAnimationFrame = function(cb) {
+    if (isVisible) return originalRaf(cb);
+    rafId = setTimeout(() => window.requestAnimationFrame(cb), 100); // Check again soon
+    return rafId;
+  };
+  
   drawFn(ctx, w, h, elements, finalCount);
+  window.requestAnimationFrame = originalRaf; // Restore global raf
 }
 
 // Hero Particles
